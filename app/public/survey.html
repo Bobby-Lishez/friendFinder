@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+        crossorigin="anonymous">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class = "container-fluid">
+        <div id = "results-area"></div>
+        <form>
+            <div class="form-group">
+                <label for="name">Your Name</label>
+                <input type="text" id="name">
+            </div>
+
+            <div class="form-group">
+                <label for "link">A link to your pic</label>
+                <input type="text" id="link">
+            </div>
+            <p>For each question, choose a value from 1(strongly disagree) to 5(strongly agree)</p>
+            <div class="form-group">
+                <label for="question1">I usually wait til the last minute to do homework assignments.</label>
+                <br>
+                <select id="question1">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="question2">I would be more productive if YouTube didn't exist.</label>
+                <br>
+                <select id="question2">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="question3">When filling out surveys with where the answers range from 1 to five, I tend to just pick 1's and fives.</label>
+                <br>
+                <select id="question3">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="question4">It bothers me to see some numbers written as words and some as digits in the same sentence.</label>
+                <br>
+                <select id="question4">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="question5">I lie on surveys even when they're anonymous.</label>
+                <br>
+                <select id="question5">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="question6">Star Wars is overrated.</label>
+                <br>
+                <select id="question6">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+
+        </form>
+        <button class="btn btn-primary" id="go">Submit your survey</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        //when the survey complete button is clicked...
+        $("#go").click(function (event) {
+            event.preventDefault();
+            //grab the values from the screen
+            var name = $("#name").val().trim();
+            var photo = $("#link").val().trim();
+            var scores = [$("#question1").val(), $("#question2").val(), $("#question3").val(), $("#question4").val(), $("#question5").val(), $("#question6").val()];
+
+            //and make a friend object with those values.
+            var newFriend = {
+                name: name,
+                photo: photo,
+                scores: scores
+            };
+            console.log(newFriend);
+
+            //post it to the api
+            $.post("/api/survey", newFriend, function(data) {
+                if (data) {
+                    alert("survey results logged");
+                }
+                else {
+                    alert("oops. Something went wrong");
+                }
+                findAMatch(newFriend);
+                $("#name").val("");
+                $("#link").val("");
+            })  
+        });
+        function findAMatch(newFriend) {
+            var currentURL = window.location.origin;
+            $.ajax({ url: currentURL + "/api/survey", method: "GET" }).then(function(result) {
+                var bestMatch = result[0];
+                var bestDifference = 30;
+                for (var i = 0; i < result.length - 1; i++) {
+                    var totalDifference = 0;
+                    for (var j = 0; j < result[i].scores.length; j++) {
+                        totalDifference += Math.abs(result[i].scores[j] - newFriend.scores[j]);
+                    }
+                    if (totalDifference < bestDifference) {
+                        bestMatch = result[i];
+                        bestDifference = totalDifference;
+                    }
+                };
+                $("#results-area").append("Your best match is " + bestMatch.name + "!<br>" + 
+                    "<img src = '" + bestMatch.photo + "'><hr>");
+            });
+        }
+    </script>
+</body>
+
+</html>
